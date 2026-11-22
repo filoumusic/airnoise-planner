@@ -1,0 +1,385 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17171b"><title>AIRNOISE Planner • Connexion Supabase</title><link rel="manifest" href="manifest.webmanifest"><style>body{margin:0;background:#101114;color:#eee;font:15px system-ui}header{background:#1c1d22;padding:22px;text-align:center}h1{margin:0;color:#f55;font-size:26px;letter-spacing:3px}nav{display:flex;overflow:auto;background:#22232a}nav button{flex:1;min-width:85px;border:0;background:transparent;color:#ddd;padding:16px 4px}nav button.active{background:#8b272d;color:white}main{max-width:720px;margin:auto;padding:18px}.panel{background:#202127;border-radius:12px;padding:16px;margin:12px 0}button,input,select,textarea{font:inherit;border-radius:7px;padding:9px}button{background:#922b33;color:white;border:0;cursor:pointer}input,select,textarea{background:#303139;color:white;border:1px solid #555;max-width:100%;box-sizing:border-box}label{display:block;margin:10px 0}small,.muted{color:#aaa}.warning{color:#ffc36d}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.event{border-left:3px solid #e54b54;padding:9px;margin:8px 0;background:#292a31}.hidden{display:none}hr{border:0;border-top:1px solid #444}
+.auth-box{max-width:720px;margin:16px auto;padding:18px;background:#202127;border-radius:12px;box-sizing:border-box}
+.auth-box input{width:100%;max-width:420px}.auth-box button{margin:5px 6px 5px 0}
+#authStatus{margin:10px 0;white-space:pre-wrap}#cloudNotice{max-width:720px;margin:12px auto;padding:12px 18px;background:#292a31;border-left:3px solid #ffc36d;box-sizing:border-box}
+
+.credit-meter{padding:18px;margin:14px 0;background:#17191e;border:1px solid #454750;border-radius:12px;text-align:center}
+.credit-meter .meter-caption{font-size:12px;letter-spacing:1.5px;color:#bbb;text-transform:uppercase}
+.credit-meter .meter-number{font-size:clamp(42px,9vw,68px);font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;color:#51d49c}
+.credit-meter .meter-number.low{color:#ffc36d}
+.credit-meter .meter-number.negative{color:#ff626b}
+.credit-meter .meter-track{height:12px;border-radius:20px;background:#41434b;overflow:hidden;margin:15px 0 8px}
+.credit-meter .meter-fill{height:100%;background:#51d49c;transition:width .3s ease}
+.credit-meter .meter-fill.low{background:#ffc36d}
+.credit-meter .meter-fill.negative{background:#ff626b}
+.credit-meter .meter-meta{font-size:13px;color:#bcbec8}
+.credit-renew{border-top:1px solid #444;padding-top:16px;margin-top:18px}
+</style></head><body><header><h1>⚡ AIRNOISE</h1><small>PLANNER • Calendrier partagé</small></header>
+<div class="auth-box" id="authBox"><h2>🔐 Connexion des musiciens</h2>
+<p class="muted">Connexion sécurisée à Supabase. Les indisponibilités sont partagées entre les membres.</p>
+<div id="authForm"><label>Nom (pour créer un compte) <input id="authName" autocomplete="name" placeholder="Ton prénom ou pseudo"></label>
+<label>Adresse e-mail <input id="authEmail" type="email" autocomplete="email" placeholder="adresse@email.fr"></label>
+<label>Mot de passe <input id="authPassword" type="password" autocomplete="current-password" placeholder="6 caractères minimum"></label>
+<button id="loginButton">Se connecter</button><button id="signupButton" type="button">Créer un compte</button></div>
+<div id="authLogged" class="hidden"><p id="authIdentity"></p><button id="logoutButton">Se déconnecter</button></div>
+<p id="authStatus" role="status" aria-live="polite"></p></div>
+<div id="cloudNotice">⚠️ <b>Mode de transition :</b> les <b>répétitions, indisponibilités et le solde du forfait sont partagés via Supabase</b>. Les concerts sont également partagés via Supabase. Le renouvellement du forfait est réservé à l’administrateur.</div>
+<nav><button data-tab="calendar" class="active">📅 Calendrier</button><button data-tab="absence">🚫 Absences</button><button data-tab="credit">⏱ Forfait</button><button data-tab="concert">🎸 Concerts</button></nav><main><section id="calendar"><h2>Calendrier partagé des répétitions</h2><div class="panel"><p class="muted">Répétitions de 2 h. Les mardis sont calculés automatiquement ; l’administrateur peut ajouter une date exceptionnelle.</p><label>Année <input type="number" id="repYear" min="2026" max="2100" step="1" value="2026"></label><div id="repAdmin" class="hidden"><button id="repYearAdd" type="button">Programmer les mardis de l’année</button><hr><label>Date exceptionnelle ou report <input id="repDate" type="date"></label><button id="repAdd" type="button">Ajouter cette répétition</button></div><p id="repStatus" role="status" aria-live="polite" class="muted">Connecte-toi pour afficher les répétitions.</p></div><div id="repCloud"></div><p class="muted"><small>Le forfait est partagé via Supabase. Le renouvellement annuel automatique des répétitions reste à installer.</small></p><div id="reps" class="hidden"></div><p id="storageNote" class="warning"></p></section><section id="absence" class="hidden"><h2>Indisponibilités</h2><div class="panel"><p class="muted">Chaque membre déclare uniquement ses propres indisponibilités.</p><label>Date <input type="date" id="absDate"></label><button id="addAbs">Ajouter l'indisponibilité</button></div><p id="absCloudStatus" role="status" aria-live="polite" class="muted">Connecte-toi pour consulter les indisponibilités.</p><div id="absences"></div></section><section id="credit" class="hidden"><h2>Forfait salle</h2><div class="panel"><div class="credit-meter" aria-live="polite"><div class="meter-caption">Solde actuel du forfait</div><div id="meterNumber" class="meter-number">…</div><div class="meter-track"><div id="meterFill" class="meter-fill" style="width:0%"></div></div><div id="meterMeta" class="meter-meta">Chargement du forfait…</div></div><div class="credit-renew"><label>Nouveau forfait (heures) <input type="number" id="hours" min="1" max="1000" step="1" value="20"></label><button id="newPack" type="button" disabled>Activer un nouveau forfait</button></div><p id="balance"></p><p id="alert"></p><p id="creditStatus" class="muted" role="status"></p><small>Les heures sont décomptées uniquement après validation. Une correction les restitue. Un solde négatif est autorisé.</small></div><div id="history"></div></section><section id="concert" class="hidden"><h2>Concerts confirmés</h2><p id="gigStatus" class="muted" role="status" aria-live="polite">Connecte-toi pour consulter les concerts.</p><div class="panel hidden" id="gigAdmin"><h3 id="gigFormTitle">Ajouter un concert officiel</h3><label>Date <input type="date" id="gigDate"></label><label>Nom du concert <input id="gigName" placeholder="AIRNOISE + groupe invité"></label><label>Lieu <input id="gigPlace" placeholder="Salle / ville"></label><label>Adresse <input id="gigAddress" placeholder="Adresse complète"></label><label>Horaire <input type="time" id="gigTime"></label><label>Informations <textarea id="gigInfo" rows="3" placeholder="Ouverture, accès, organisation…"></textarea></label><div class="row"><button id="addGig" type="button">Ajouter le concert officiel</button><button id="cancelGigEdit" type="button" class="hidden">Annuler la modification</button></div></div><div id="gigs"></div></section><p class="muted"><small>Répétitions, absences et solde du forfait partagés via Supabase. Concerts partagés via Supabase.</small></p></main><script>
+// Navigation commune aux quatre rubriques.
+const $=id=>document.getElementById(id);
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));$(b.dataset.tab).classList.remove('hidden')});
+$('absDate').value=new Date().toISOString().slice(0,10);
+$('gigDate').value=new Date().toISOString().slice(0,10);
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// Concerts officiels : lecture partagée, modifications réservées à l'administrateur.
+(() => {
+  const el=id=>document.getElementById(id);
+  const status=el('gigStatus'), list=el('gigs'), form=el('gigAdmin');
+  const url='https://ebdykaiwqdlbkjykwvno.supabase.co';
+  const key='sb_publishable_QP7y1FILJm8xaVVEwgHsow_Qb2Stkd5';
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt=d=>new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(!window.supabase?.createClient){status.textContent='Bibliothèque Supabase indisponible.';return;}
+  const db=window.supabase.createClient(url,key);
+  let user=null, admin=false, rows=[], editing=null, generation=0, busy=false;
+  const fields={date_concert:'gigDate',nom_concert:'gigName',lieu:'gigPlace',adresse:'gigAddress',heure_concert:'gigTime',infos:'gigInfo'};
+  function resetForm(){editing=null;el('gigFormTitle').textContent='Ajouter un concert officiel';el('addGig').textContent='Ajouter le concert officiel';el('cancelGigEdit').classList.add('hidden');for(const id of Object.values(fields))el(id).value='';el('gigDate').value=new Date().toISOString().slice(0,10);}
+  function display(){
+    form.classList.toggle('hidden',!admin);
+    el('addGig').disabled=busy||!admin;
+    list.innerHTML=rows.length?rows.map(g=>`<div class="event"><b>${esc(fmt(g.date_concert))}</b>${g.nom_concert?`<p><strong>${esc(g.nom_concert)}</strong></p>`:''}<p>${esc(g.lieu||'Lieu à préciser')}${g.heure_concert?' • '+esc(g.heure_concert.slice(0,5)):''}</p>${g.adresse?`<small>${esc(g.adresse)}</small>`:''}${g.infos?`<p>${esc(g.infos)}</p>`:''}${admin?`<div class="row"><button type="button" data-gig-action="edit" data-id="${g.id}">Modifier</button><button type="button" data-gig-action="delete" data-id="${g.id}">Supprimer</button></div>`:''}</div>`).join(''):'<p>Aucun concert officiel enregistré.</p>';
+  }
+  async function refresh(){
+    const token=++generation;
+    if(!user){admin=false;rows=[];resetForm();display();status.textContent='Connecte-toi pour consulter les concerts.';return;}
+    status.textContent='Chargement des concerts…';
+    const [p,r]=await Promise.all([db.from('profils').select('role,actif').eq('id',user.id).maybeSingle(),db.from('concerts').select('id,date_concert,nom_concert,lieu,adresse,heure_concert,infos').order('date_concert',{ascending:true})]);
+    if(token!==generation)return;
+    admin=!p.error&&p.data?.role==='admin'&&p.data?.actif===true;
+    if(r.error){rows=[];status.textContent='Lecture des concerts impossible : '+r.error.message;}else{rows=r.data||[];status.textContent='Concerts synchronisés avec Supabase.';}
+    display();
+  }
+  el('cancelGigEdit').addEventListener('click',()=>{resetForm();display();});
+  el('addGig').addEventListener('click',async()=>{
+    if(!user||!admin||busy)return;
+    const payload={};for(const [column,id] of Object.entries(fields))payload[column]=el(id).value.trim()||null;
+    if(!payload.date_concert||!payload.nom_concert||!payload.lieu){status.textContent='Indique la date, le nom et le lieu du concert.';return;}
+    const message=editing===null?'Confirmer ce concert officiel ?':'Enregistrer les modifications de ce concert ?';
+    if(!confirm(message))return;
+    busy=true;display();status.textContent='Enregistrement en cours…';
+    const result=editing===null?await db.from('concerts').insert(payload):await db.from('concerts').update(payload).eq('id',editing);
+    busy=false;
+    if(result.error){status.textContent='Enregistrement impossible : '+result.error.message;display();return;}
+    resetForm();await refresh();status.textContent='Concert enregistré dans Supabase.';
+  });
+  list.addEventListener('click',async event=>{
+    const b=event.target.closest('button[data-gig-action]');if(!b||!admin||busy)return;
+    const gig=rows.find(g=>String(g.id)===b.dataset.id);if(!gig)return;
+    if(b.dataset.gigAction==='edit'){
+      editing=gig.id;for(const [column,id] of Object.entries(fields))el(id).value=column==='heure_concert'?(gig[column]||'').slice(0,5):(gig[column]||'');
+      el('gigFormTitle').textContent='Modifier un concert';el('addGig').textContent='Enregistrer les modifications';el('cancelGigEdit').classList.remove('hidden');form.scrollIntoView({behavior:'smooth',block:'start'});return;
+    }
+    if(b.dataset.gigAction==='delete'){
+      if(!confirm('Supprimer définitivement le concert du '+fmt(gig.date_concert)+' ?'))return;
+      busy=true;display();status.textContent='Suppression en cours…';
+      const {error}=await db.from('concerts').delete().eq('id',gig.id);
+      busy=false;if(error){status.textContent='Suppression impossible : '+error.message;display();return;}
+      if(editing===gig.id)resetForm();await refresh();status.textContent='Concert supprimé de Supabase.';
+    }
+  });
+  db.auth.onAuthStateChange((_event,session)=>{const next=session?.user||null;if(next?.id!==user?.id){user=next;setTimeout(refresh,0);}});
+  db.auth.getSession().then(({data,error})=>{if(error){status.textContent=error.message;return;}user=data.session?.user||null;refresh();});
+  display();
+})();
+</script>
+<script>
+(() => {
+  const SUPABASE_URL = 'https://ebdykaiwqdlbkjykwvno.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_QP7y1FILJm8xaVVEwgHsow_Qb2Stkd5';
+  const el = id => document.getElementById(id);
+  const status = message => { el('authStatus').textContent = message; };
+  if (!window.supabase?.createClient) { status('Impossible de charger la bibliothèque Supabase. Vérifie ta connexion Internet puis actualise la page.'); return; }
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  async function showSession(session) {
+    const user = session?.user;
+    el('authForm').classList.toggle('hidden', !!user);
+    el('authLogged').classList.toggle('hidden', !user);
+    el('authIdentity').textContent = user ? 'Connecté : ' + user.email : '';
+    if (!user) return;
+    const {data, error} = await client.from('profils').select('nom,role,actif').eq('id', user.id).maybeSingle();
+    if (error) status('Connecté, mais lecture du profil impossible : ' + error.message);
+    else if (data) status('Bienvenue ' + (data.nom || user.email) + ' ! Rôle : ' + data.role + (data.actif ? '' : ' (compte inactif)'));
+    else status('Connecté, mais profil introuvable.');
+  }
+  el('loginButton').addEventListener('click', async () => {
+    status('Connexion en cours…');
+    const {data,error} = await client.auth.signInWithPassword({email:el('authEmail').value.trim(),password:el('authPassword').value});
+    if (error) status('Connexion refusée : ' + error.message);
+    else await showSession(data.session);
+  });
+  el('signupButton').addEventListener('click', async () => {
+    const nom=el('authName').value.trim(), email=el('authEmail').value.trim(), password=el('authPassword').value;
+    if (!nom || !email || password.length < 6) {status('Indique ton nom, ton e-mail et un mot de passe de 6 caractères minimum.');return;}
+    status('Création du compte en cours…');
+    const {data,error} = await client.auth.signUp({email,password,options:{data:{nom}}});
+    if (error) status('Création impossible : ' + error.message);
+    else if (!data.session) status('Compte demandé. Vérifie ta boîte e-mail pour confirmer ton adresse, puis reviens ici te connecter.');
+    else await showSession(data.session);
+  });
+  el('logoutButton').addEventListener('click', async () => {
+    const {error} = await client.auth.signOut();
+    if (error) status('Déconnexion impossible : ' + error.message);
+    else {await showSession(null);status('Déconnecté.');}
+  });
+  client.auth.onAuthStateChange((_event,session) => {showSession(session);});
+  client.auth.getSession().then(({data,error}) => {if(error) status(error.message); else showSession(data.session);});
+})();
+</script>
+<script>
+(() => {
+  const url='https://ebdykaiwqdlbkjykwvno.supabase.co';
+  const key='sb_publishable_QP7y1FILJm8xaVVEwgHsow_Qb2Stkd5';
+  const status=document.getElementById('absCloudStatus');
+  const list=document.getElementById('absences');
+  const add=document.getElementById('addAbs');
+  const date=document.getElementById('absDate');
+  const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const formatDate=d=>new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(!window.supabase?.createClient){status.textContent='Bibliothèque Supabase indisponible : vérifie ta connexion Internet.';add.disabled=true;return;}
+  const db=window.supabase.createClient(url,key,{auth:{storageKey:'airnoise-planner-absences-auth'}});
+  // Reprendre la session du premier client, qui utilise la clé de stockage Supabase par défaut.
+  const primary=window.supabase.createClient(url,key);
+  let user=null, absences=[], noms={};
+  async function refresh(){
+    if(!user){absences=[];noms={};window.airnoiseAbsences=[];window.airnoiseNoms={};list.innerHTML='';status.textContent='Connecte-toi pour consulter les indisponibilités.';add.disabled=true;return;}
+    add.disabled=false;status.textContent='Chargement des indisponibilités…';
+    const [a,p]=await Promise.all([
+      primary.from('indisponibilites').select('id,musicien_id,date_indisponibilite').order('date_indisponibilite'),
+      primary.from('profils').select('id,nom')
+    ]);
+    if(a.error){status.textContent='Lecture impossible : '+a.error.message;return;}
+    absences=a.data||[];noms=Object.fromEntries((p.data||[]).map(x=>[x.id,x.nom||'Membre du groupe']));
+    window.airnoiseAbsences=absences;window.airnoiseNoms=noms;
+    list.innerHTML=absences.length?absences.map(x=>'<div class="event"><b>'+escapeHTML(formatDate(x.date_indisponibilite))+'</b> • '+escapeHTML(noms[x.musicien_id]||(x.musicien_id===user.id?'Moi':'Membre du groupe'))+(x.musicien_id===user.id?' <button type="button" data-remove="'+escapeHTML(x.id)+'">Retirer</button>':'')+'</div>').join(''):'<p>Aucune indisponibilité déclarée.</p>';
+    status.textContent=p.error?'Absences chargées, mais les noms des autres membres ne sont pas encore accessibles.':'Indisponibilités synchronisées avec Supabase.';
+  }
+  add.addEventListener('click',async()=>{
+    if(!user){status.textContent='Connecte-toi avant de déclarer une absence.';return;}
+    if(!date.value){status.textContent='Choisis une date.';return;}
+    add.disabled=true;status.textContent='Enregistrement…';
+    const {error}=await primary.from('indisponibilites').insert({musicien_id:user.id,date_indisponibilite:date.value});
+    if(error){status.textContent=error.code==='23505'?'Cette date est déjà déclarée.':'Enregistrement impossible : '+error.message;add.disabled=false;return;}
+    await refresh();
+  });
+  list.addEventListener('click',async e=>{
+    const b=e.target.closest('button[data-remove]');if(!b||!user)return;
+    const item=absences.find(x=>String(x.id)===b.dataset.remove);if(!item||item.musicien_id!==user.id)return;
+    if(!confirm('Retirer ton indisponibilité du '+formatDate(item.date_indisponibilite)+' ?'))return;
+    b.disabled=true;
+    const {error}=await primary.from('indisponibilites').delete().eq('id',item.id).eq('musicien_id',user.id);
+    if(error){status.textContent='Suppression impossible : '+error.message;b.disabled=false;return;}
+    await refresh();
+  });
+  primary.auth.onAuthStateChange((_event,session)=>{
+    const id=session?.user?.id||null;
+    if(id!==user?.id){user=session?.user||null;setTimeout(refresh,0);}
+  });
+  primary.auth.getSession().then(({data,error})=>{if(error){status.textContent=error.message;return;}user=data.session?.user||null;refresh();});
+  add.disabled=true;
+})();
+</script>
+<script>
+(() => {
+  const $c = id => document.getElementById(id);
+  const url = 'https://ebdykaiwqdlbkjykwvno.supabase.co';
+  const key = 'sb_publishable_QP7y1FILJm8xaVVEwgHsow_Qb2Stkd5';
+  const status = $c('repStatus');
+  const container = $c('repCloud');
+  const adminBox = $c('repAdmin');
+  const yearInput = $c('repYear');
+  const yearButton = $c('repYearAdd');
+  const dateInput = $c('repDate');
+  const addButton = $c('repAdd');
+  yearInput.value = String(new Date().getFullYear());
+  const safe = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const dateFR = date => new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if (!window.supabase?.createClient) { status.textContent = 'Connexion Supabase indisponible : vérifie Internet.'; return; }
+  // Même projet et stockage de session que le formulaire de connexion existant.
+  const db = window.supabase.createClient(url, key);
+  let user = null, isAdmin = false, repetitions = [];
+  let forfait = null;
+  let renewalPending = false;
+  let generation = 0;
+  function drawForfait(message='') {
+    const balance = document.getElementById('balance');
+    const alertBox = document.getElementById('alert');
+    const creditStatus = document.getElementById('creditStatus');
+    const number = document.getElementById('meterNumber');
+    const fill = document.getElementById('meterFill');
+    const meta = document.getElementById('meterMeta');
+    const format = n => Number(n).toLocaleString('fr-FR', {maximumFractionDigits: 2});
+    if (!forfait) {
+      number.textContent = '—';
+      number.className = 'meter-number';
+      fill.style.width = '0%';
+      fill.className = 'meter-fill';
+      meta.textContent = user ? 'Aucun forfait actif' : 'Connecte-toi pour voir ton solde';
+      balance.textContent = '';
+      alertBox.textContent = '';
+    } else {
+      const h = Number(forfait.heures_restantes);
+      const total = Number(forfait.heures_total);
+      const negative = h < 0;
+      const low = !negative && h <= 4;
+      const level = negative ? 'negative' : low ? 'low' : '';
+      number.textContent = `${h < 0 ? '−' : ''}${format(Math.abs(h))} h`;
+      number.className = 'meter-number' + (level ? ' ' + level : '');
+      fill.className = 'meter-fill' + (level ? ' ' + level : '');
+      fill.style.width = `${Math.max(0, Math.min(100, total > 0 ? h / total * 100 : 0))}%`;
+      meta.textContent = negative ? `${format(Math.abs(h))} h déjà utilisées sur le prochain forfait` : `${format(Math.max(0, total-h))} h consommées sur ${format(total)} h`;
+      balance.textContent = '';
+      alertBox.textContent = negative ? `⚠️ Solde négatif : ${format(Math.abs(h))} h seront déduites du prochain forfait.` : low ? '⚠️ Attention : il reste au maximum deux répétitions standard.' : '';
+    }
+    creditStatus.textContent = message;
+  }
+  const renewButton = $c('newPack');
+  const renewInput = $c('hours');
+  const buttonsEnabled = () => {
+    yearButton.disabled = !isAdmin;
+    addButton.disabled = !isAdmin;
+    renewButton.disabled = !isAdmin || renewalPending || !forfait;
+    renewInput.disabled = !isAdmin || renewalPending;
+  };
+  renewButton.addEventListener('click', async () => {
+    if (!user || !isAdmin || renewalPending || !forfait) return;
+    const hours = Number(renewInput.value);
+    if (!Number.isInteger(hours) || hours < 1 || hours > 1000) {
+      drawForfait('Indique un nombre entier d’heures entre 1 et 1000.');
+      return;
+    }
+    const current = Number(forfait.heures_restantes);
+    const expected = current + hours;
+    if (!confirm(`Renouveler le forfait de ${hours} h ?\n\nSolde actuel : ${current} h\nNouveau solde prévu : ${expected} h\n\nCette opération sera enregistrée dans Supabase.`)) return;
+    renewalPending = true;
+    buttonsEnabled();
+    drawForfait('Renouvellement en cours…');
+    try {
+      const {data, error} = await db.rpc('renouveler_forfait', {nouvelles_heures: hours});
+      if (error) {
+        drawForfait('Renouvellement impossible : ' + error.message);
+        return;
+      }
+      await refresh();
+      drawForfait(`Nouveau forfait activé. Solde : ${Number(data).toLocaleString('fr-FR')} h.`);
+    } catch (err) {
+      drawForfait('Erreur de connexion : ' + (err?.message || String(err)));
+    } finally {
+      renewalPending = false;
+      buttonsEnabled();
+    }
+  });
+  async function refresh() {
+    const token = ++generation;
+    if (!user) {isAdmin = false;repetitions=[];forfait=null;adminBox.classList.add('hidden');container.innerHTML='';status.textContent='Connecte-toi pour consulter les répétitions.';drawForfait();buttonsEnabled();return;}
+    status.textContent='Chargement du calendrier…';
+    const [{data:profile,error:profileError},{data:rows,error:rowsError},{data:packs,error:packError}] = await Promise.all([
+      db.from('profils').select('role,actif').eq('id',user.id).maybeSingle(),
+      db.from('Repetitions').select('id,date_repetition,duree_heures,statut,validee').order('date_repetition'),
+       db.from('forfaits').select('id,heures_total,heures_restantes,actif').eq('actif',true).limit(1)
+    ]);
+    if (token !== generation) return;
+    isAdmin = !profileError && profile?.role === 'admin' && profile?.actif === true;
+    adminBox.classList.toggle('hidden',!isAdmin);
+    buttonsEnabled();
+    if (rowsError) {status.textContent='Lecture du calendrier impossible : '+rowsError.message;container.innerHTML='';return;}
+    repetitions = rows || [];
+    forfait = packError ? null : (packs?.[0] || null);
+    drawForfait(packError ? 'Erreur de lecture du forfait : ' + packError.message : 'Forfait synchronisé avec Supabase.');
+    buttonsEnabled();
+    draw();
+    status.textContent = 'Calendrier synchronisé avec Supabase. ' + (isAdmin ? 'Mode administrateur.' : 'Consultation uniquement.');
+  }
+  function draw() {
+    const y=Number(yearInput.value);
+    if (!Number.isInteger(y) || y<2026 || y>2100) {container.textContent='Choisis une année entre 2026 et 2100.';return;}
+    const selected = repetitions.filter(r => r.date_repetition.startsWith(String(y)+'-'));
+    container.innerHTML = selected.length ? selected.map(r => {
+      const cancelled = r.statut === 'annulee' || r.statut === 'annulée';
+      const done = r.validee || r.statut === 'effectuee';
+      const label = done ? '✅ Effectuée' : cancelled ? '❌ Annulée' : '🗓 Prévue';
+      const actions = isAdmin ? `<div class="row" style="margin-top:9px">${done ? `<button type="button" data-action="undo" data-id="${r.id}">Corriger la validation</button>` : cancelled ? `<button type="button" data-action="restore" data-id="${r.id}">Rétablir</button>` : `<button type="button" data-action="validate" data-id="${r.id}">Valider</button><button type="button" data-action="cancel" data-id="${r.id}">Annuler</button><button type="button" data-action="move" data-id="${r.id}">Reporter</button>`}</div>` : '';
+      const abs = (window.airnoiseAbsences || []).filter(a => a.date_indisponibilite === r.date_repetition).map(a => safe((window.airnoiseNoms||{})[a.musicien_id] || 'Membre du groupe'));
+      return `<div class="event"><b>${safe(dateFR(r.date_repetition))}</b> • ${safe(r.duree_heures)} h<br><small>${label}</small>${abs.length?`<p class="warning">Indisponibles : ${abs.join(', ')}</p>`:''}${actions}</div>`;
+    }).join('') : '<p>Aucune répétition programmée pour cette année.</p>';
+  }
+  yearInput.addEventListener('change',draw);
+  yearButton.addEventListener('click', async () => {
+    if (!isAdmin) return;
+    const year = Number(yearInput.value);
+    if (!Number.isInteger(year) || year < 2026 || year > 2100) {status.textContent='Année incorrecte.';return;}
+    if (!confirm('Programmer tous les mardis de '+year+' ? Les répétitions existantes, y compris les annulations, resteront inchangées.')) return;
+    yearButton.disabled=true;status.textContent='Programmation en cours…';
+    const {data,error} = await db.rpc('programmer_mardis',{annee:year});
+    if (error) {status.textContent='Programmation impossible : '+error.message;buttonsEnabled();return;}
+    await refresh();status.textContent=`${data} nouvelle(s) répétition(s) créée(s) pour ${year}.`;
+  });
+  addButton.addEventListener('click',async()=>{
+    if (!isAdmin || !dateInput.value) {status.textContent='Choisis une date.';return;}
+    if (!confirm('Ajouter la répétition du '+dateFR(dateInput.value)+' ?'))return;
+    addButton.disabled=true;
+    const {error} = await db.from('Repetitions').insert({date_repetition:dateInput.value,duree_heures:2,statut:'prevue',validee:false});
+    if (error) {status.textContent=error.code==='23505'?'Cette date existe déjà dans le calendrier.':'Ajout impossible : '+error.message;buttonsEnabled();return;}
+    yearInput.value=dateInput.value.slice(0,4);
+    await refresh();status.textContent='Répétition ajoutée dans Supabase.';
+  });
+  container.addEventListener('click',async event=>{
+    const button=event.target.closest('button[data-action]');
+    if (!button || !isAdmin)return;
+    const rep=repetitions.find(r=>String(r.id)===button.dataset.id);
+    if (!rep)return;
+    let patch;
+    if (button.dataset.action==='validate') {
+       if(rep.validee || rep.statut==='annulee')return;
+       if(!forfait){status.textContent='Aucun forfait actif : validation impossible. Consulte l’onglet Forfait.';return;}
+       if(!confirm('Valider '+rep.duree_heures+' h pour le '+dateFR(rep.date_repetition)+' ? Le forfait sera décompté.'))return;
+       patch={validee:true,statut:'effectuee'};
+     } else if (button.dataset.action==='undo') {
+       if(!rep.validee)return;
+       if(!confirm('Annuler la validation du '+dateFR(rep.date_repetition)+' ? Les '+rep.duree_heures+' h seront recréditées.'))return;
+       patch={validee:false,statut:'prevue'};
+     } else if (button.dataset.action==='cancel') {
+      if(rep.validee)return;
+       if(!confirm('Annuler la répétition du '+dateFR(rep.date_repetition)+' ?'))return;
+      patch={statut:'annulee'};
+    } else if(button.dataset.action==='restore') {
+       if(rep.validee)return;
+      if(!confirm('Rétablir la répétition du '+dateFR(rep.date_repetition)+' ?'))return;
+      patch={statut:'prevue'};
+    } else if(button.dataset.action==='move') {
+       if(rep.validee)return;
+      const next=prompt('Nouvelle date (AAAA-MM-JJ) :',rep.date_repetition);
+      if(next===null)return;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(next)||Number.isNaN(Date.parse(next))){status.textContent='Date invalide. Utilise AAAA-MM-JJ.';return;}
+      if(!confirm('Reporter du '+dateFR(rep.date_repetition)+' au '+dateFR(next)+' ?'))return;
+      patch={date_repetition:next};
+    } else return;
+    button.disabled=true;
+    const {error}=await db.from('Repetitions').update(patch).eq('id',rep.id);
+    if(error){status.textContent=error.code==='23505'?'Une répétition existe déjà à cette date.':'Modification impossible : '+error.message;button.disabled=false;return;}
+    if(patch.date_repetition)yearInput.value=patch.date_repetition.slice(0,4);
+    await refresh();status.textContent='Modification enregistrée dans Supabase. Solde actualisé.';
+  });
+  // Les absences sont chargées dans un autre module ; actualiser leur affichage dans le calendrier.
+  const observer=new MutationObserver(()=>{if(user)draw();});
+  observer.observe($c('absences'),{childList:true,subtree:true});
+  db.auth.onAuthStateChange((_event,session)=>{
+    const next=session?.user||null;
+    if(next?.id !== user?.id){user=next;setTimeout(refresh,0);}
+  });
+  db.auth.getSession().then(({data,error})=>{if(error){status.textContent=error.message;return;}user=data.session?.user||null;refresh();});
+  buttonsEnabled();
+})();
+</script>
+</body></html>
