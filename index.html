@@ -17,14 +17,13 @@
 </style></head><body><header><h1>⚡ AIRNOISE</h1><small>PLANNER • Calendrier partagé</small></header>
 <div class="auth-box" id="authBox"><h2>🔐 Connexion des musiciens</h2>
 <p class="muted">Connexion sécurisée à Supabase. Les indisponibilités sont partagées entre les membres.</p>
-<div id="authForm"><label class="hidden">Nom (pour créer un compte) <input id="authName" autocomplete="name" placeholder="Ton prénom ou pseudo"></label>
+<div id="authForm"><label>Nom (pour créer un compte) <input id="authName" autocomplete="name" placeholder="Ton prénom ou pseudo"></label>
 <label>Adresse e-mail <input id="authEmail" type="email" autocomplete="email" placeholder="adresse@email.fr"></label>
 <label>Mot de passe <input id="authPassword" type="password" autocomplete="current-password" placeholder="8 caractères minimum"></label>
-<button id="loginButton">Se connecter</button><button id="signupButton" type="button" class="hidden">Créer un compte</button></div>
-<div id="inviteSetup" class="hidden"><h3>🎸 Bienvenue chez AIRNOISE !</h3><p>Organise ton chaos ! Choisis ton mot de passe pour activer ton accès.</p><label>Nouveau mot de passe <input id="invitePassword" type="password" autocomplete="new-password" minlength="8" placeholder="8 caractères minimum"></label><label>Confirmer le mot de passe <input id="invitePasswordConfirm" type="password" autocomplete="new-password" minlength="8" placeholder="Répète ton mot de passe"></label><button id="inviteSave" type="button">Activer mon accès</button></div>
+<button id="loginButton">Se connecter</button><button id="signupButton" type="button">Créer un compte</button></div>
 <div id="authLogged" class="hidden"><p id="authIdentity"></p><button id="logoutButton">Se déconnecter</button></div>
 <p id="authStatus" role="status" aria-live="polite"></p></div>
-<div id="cloudNotice"><b>AIRNOISE-PLANNER :</b> les <b>répétitions, indisponibilités et le solde du forfait sont partagés via Supabase</b>. Les concerts sont également partagés via Supabase. Le renouvellement du forfait est réservé à l’administrateur.</div>
+<div id="cloudNotice">⚠️ <b>Mode de transition :</b> les <b>répétitions, indisponibilités et le solde du forfait sont partagés via Supabase</b>. Les concerts sont également partagés via Supabase. Le renouvellement du forfait est réservé à l’administrateur.</div>
 <nav><button data-tab="calendar" class="active">📅 Calendrier</button><button data-tab="absence">🚫 Absences</button><button data-tab="credit">⏱ Forfait</button><button data-tab="concert">🎸 Concerts</button></nav><main><section id="calendar"><h2>Calendrier partagé des répétitions</h2><div class="panel"><p class="muted">Répétitions de 2 h. Les mardis sont calculés automatiquement ; l’administrateur peut ajouter une date exceptionnelle.</p><label>Année <input type="number" id="repYear" min="2026" max="2100" step="1" value="2026"></label><div id="repAdmin" class="hidden"><button id="repYearAdd" type="button">Programmer les mardis de l’année</button><hr><label>Date exceptionnelle ou report <input id="repDate" type="date"></label><button id="repAdd" type="button">Ajouter cette répétition</button></div><p id="repStatus" role="status" aria-live="polite" class="muted">Connecte-toi pour afficher les répétitions.</p></div><div id="repCloud"></div><p class="muted"><small>Le forfait est partagé via Supabase. La programmation annuelle des répétitions est automatique.</small></p><div id="reps" class="hidden"></div><p id="storageNote" class="warning"></p></section><section id="absence" class="hidden"><h2>Indisponibilités</h2><div class="panel"><p class="muted">Chaque membre déclare uniquement ses propres indisponibilités.</p><label>Date <input type="date" id="absDate"></label><button id="addAbs">Ajouter l'indisponibilité</button></div><p id="absCloudStatus" role="status" aria-live="polite" class="muted">Connecte-toi pour consulter les indisponibilités.</p><div id="absences"></div></section><section id="credit" class="hidden"><h2>Forfait salle</h2><div class="panel"><div class="credit-meter" aria-live="polite"><div class="meter-caption">Solde actuel du forfait</div><div id="meterNumber" class="meter-number">…</div><div class="meter-track"><div id="meterFill" class="meter-fill" style="width:0%"></div></div><div id="meterMeta" class="meter-meta">Chargement du forfait…</div></div><div class="credit-renew"><label>Nouveau forfait (heures) <input type="number" id="hours" min="1" max="1000" step="1" value="20"></label><button id="newPack" type="button" disabled>Activer un nouveau forfait</button></div><p id="balance"></p><p id="alert"></p><p id="creditStatus" class="muted" role="status"></p><small>Les heures sont décomptées uniquement après validation. Une correction les restitue. Un solde négatif est autorisé.</small></div><div id="history"></div></section><section id="concert" class="hidden"><h2>Concerts confirmés</h2><p id="gigStatus" class="muted" role="status" aria-live="polite">Connecte-toi pour consulter les concerts.</p><div class="panel hidden" id="gigAdmin"><h3 id="gigFormTitle">Ajouter un concert officiel</h3><label>Date <input type="date" id="gigDate"></label><label>Nom du concert <input id="gigName" placeholder="AIRNOISE + groupe invité"></label><label>Lieu <input id="gigPlace" placeholder="Salle / ville"></label><label>Adresse <input id="gigAddress" placeholder="Adresse complète"></label><label>Horaire <input type="time" id="gigTime"></label><label>Informations <textarea id="gigInfo" rows="3" placeholder="Ouverture, accès, organisation…"></textarea></label><div class="row"><button id="addGig" type="button">Ajouter le concert officiel</button><button id="cancelGigEdit" type="button" class="hidden">Annuler la modification</button></div></div><div id="gigs"></div></section><p class="muted"><small>Répétitions, absences et solde du forfait partagés via Supabase. Concerts partagés via Supabase.</small></p></main><script>
 // Navigation commune aux quatre rubriques.
 const $=id=>document.getElementById(id);
@@ -32,13 +31,6 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.query
 $('absDate').value=new Date().toISOString().slice(0,10);
 $('gigDate').value=new Date().toISOString().slice(0,10);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script><script>
-// Capturer l'invitation avant que Supabase ne traite et nettoie son URL.
-window.airnoiseInvitationLink = (() => {
-  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
-  const query = new URLSearchParams(location.search);
-  return hash.get('type') === 'invite' || query.get('type') === 'invite';
-})();
 </script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // Concerts officiels : lecture partagée, modifications réservées à l'administrateur.
@@ -110,19 +102,10 @@ window.airnoiseInvitationLink = (() => {
   const status = message => { el('authStatus').textContent = message; };
   if (!window.supabase?.createClient) { status('Impossible de charger la bibliothèque Supabase. Vérifie ta connexion Internet puis actualise la page.'); return; }
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  // Supabase renvoie le type de lien dans l'URL d'invitation.
-  const invitationLink = window.airnoiseInvitationLink === true;
-  let invitationPending = invitationLink;
-  let inviteBusy = false;
   async function showSession(session) {
     const user = session?.user;
     el('authForm').classList.toggle('hidden', !!user);
-    el('inviteSetup').classList.toggle('hidden', !(user && invitationPending));
-    el('authLogged').classList.toggle('hidden', !user || invitationPending);
-    if (user && invitationPending) {
-      status('Invitation reconnue. Définis ton mot de passe pour terminer ton activation.');
-      return;
-    }
+    el('authLogged').classList.toggle('hidden', !user);
     el('authIdentity').textContent = user ? 'Connecté : ' + user.email : '';
     if (!user) return;
     const {data, error} = await client.from('profils').select('nom,role,actif').eq('id', user.id).maybeSingle();
@@ -130,35 +113,6 @@ window.airnoiseInvitationLink = (() => {
     else if (data) status('Bienvenue ' + (data.nom || user.email) + ' ! Rôle : ' + data.role + (data.actif ? '' : ' (compte inactif)'));
     else status('Connecté, mais profil introuvable.');
   }
-  el('inviteSave').addEventListener('click', async () => {
-    if (inviteBusy) return;
-    const password = el('invitePassword').value;
-    const confirmation = el('invitePasswordConfirm').value;
-    if (password.length < 8) {status('Choisis un mot de passe de 8 caractères minimum.');return;}
-    if (password !== confirmation) {status('Les deux mots de passe ne correspondent pas.');return;}
-    inviteBusy = true;
-    el('inviteSave').disabled = true;
-    status('Activation de ton accès en cours…');
-    try {
-      const {data:{session},error:sessionError} = await client.auth.getSession();
-      if (sessionError || !session) {
-        status('Lien d’invitation expiré ou invalide. Demande une nouvelle invitation à l’administrateur.');
-        return;
-      }
-      const {error} = await client.auth.updateUser({password});
-      if (error) {status('Impossible de définir le mot de passe : ' + error.message);return;}
-      invitationPending = false;
-      el('invitePassword').value = '';
-      el('invitePasswordConfirm').value = '';
-      // Ne pas conserver les jetons de l'invitation dans l'historique du navigateur.
-      history.replaceState(null, '', location.pathname);
-      await showSession(session);
-      status('🎸 Ton accès AIRNOISE est activé ! Bienvenue dans le chaos organisé.');
-    } finally {
-      inviteBusy = false;
-      el('inviteSave').disabled = false;
-    }
-  });
   el('loginButton').addEventListener('click', async () => {
     status('Connexion en cours…');
     const {data,error} = await client.auth.signInWithPassword({email:el('authEmail').value.trim(),password:el('authPassword').value});
@@ -167,7 +121,7 @@ window.airnoiseInvitationLink = (() => {
   });
   el('signupButton').addEventListener('click', async () => {
     const nom=el('authName').value.trim(), email=el('authEmail').value.trim(), password=el('authPassword').value;
-    if (!nom || !email || password.length < 8) {status('Indique ton nom, ton e-mail et un mot de passe de 8 caractères minimum.');return;}
+    if (!nom || !email || password.length < 8) {status('Indique ton nom, ton e-mail et un mot de passe de 6 caractères minimum.');return;}
     status('Création du compte en cours…');
     const {data,error} = await client.auth.signUp({email,password,options:{data:{nom}}});
     if (error) status('Création impossible : ' + error.message);
