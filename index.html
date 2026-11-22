@@ -19,7 +19,7 @@
 <p class="muted">Connexion sécurisée à Supabase. Les indisponibilités sont partagées entre les membres.</p>
 <div id="authForm"><label>Nom (pour créer un compte) <input id="authName" autocomplete="name" placeholder="Ton prénom ou pseudo"></label>
 <label>Adresse e-mail <input id="authEmail" type="email" autocomplete="email" placeholder="adresse@email.fr"></label>
-<label>Mot de passe <input id="authPassword" type="password" autocomplete="current-password" placeholder="6 caractères minimum"></label>
+<label>Mot de passe <input id="authPassword" type="password" autocomplete="current-password" placeholder="8 caractères minimum"></label>
 <button id="loginButton">Se connecter</button><button id="signupButton" type="button">Créer un compte</button></div>
 <div id="authLogged" class="hidden"><p id="authIdentity"></p><button id="logoutButton">Se déconnecter</button></div>
 <p id="authStatus" role="status" aria-live="polite"></p></div>
@@ -121,7 +121,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
   });
   el('signupButton').addEventListener('click', async () => {
     const nom=el('authName').value.trim(), email=el('authEmail').value.trim(), password=el('authPassword').value;
-    if (!nom || !email || password.length < 6) {status('Indique ton nom, ton e-mail et un mot de passe de 6 caractères minimum.');return;}
+    if (!nom || !email || password.length < 8) {status('Indique ton nom, ton e-mail et un mot de passe de 6 caractères minimum.');return;}
     status('Création du compte en cours…');
     const {data,error} = await client.auth.signUp({email,password,options:{data:{nom}}});
     if (error) status('Création impossible : ' + error.message);
