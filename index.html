@@ -14,6 +14,8 @@
 .credit-meter .meter-fill.negative{background:#ff626b}
 .credit-meter .meter-meta{font-size:13px;color:#bcbec8}
 .credit-renew{border-top:1px solid #444;padding-top:16px;margin-top:18px}
+
+.month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0}.month-nav button{min-width:42px}.month-nav strong{text-transform:capitalize;text-align:center}.next-rep{background:#292a31;border-left:4px solid #ffc36d;border-radius:9px;padding:10px 12px;margin:8px 0}.next-rep strong{display:block;font-size:20px;margin:3px 0}.rep-card{background:#292a31;border-left:4px solid var(--rep-color);border-radius:8px;margin:6px 0;padding:7px 10px}.rep-line{display:flex;align-items:center;gap:12px}.rep-day{min-width:45px;text-align:center;color:var(--rep-color);font-size:25px;font-weight:800;line-height:1}.rep-day small{display:block;font-size:10px;text-transform:uppercase}.rep-info{flex:1;min-width:0}.rep-info b{color:var(--rep-color)}.rep-card p{margin:4px 0;font-size:13px}.rep-card details{margin-top:5px}.rep-card summary{cursor:pointer;color:#bbb;font-size:13px}.rep-card .row{margin-top:8px}.rep-tools{margin:8px 0}.rep-tools summary{cursor:pointer;color:#bbb}.rep-status{font-size:12px;margin:6px 0}.month-today{display:block;margin:8px auto;font-size:13px}#calendar h2{font-size:19px;margin:8px 0}
 </style></head><body><header><h1>⚡ AIRNOISE</h1><small>PLANNER • Calendrier partagé</small></header>
 <div class="auth-box" id="authBox"><h2>🔐 Connexion des musiciens</h2>
 <p class="muted">Connexion sécurisée à Supabase. Les indisponibilités sont partagées entre les membres.</p>
@@ -24,7 +26,7 @@
 <div id="authLogged" class="hidden"><p id="authIdentity"></p><button id="logoutButton">Se déconnecter</button></div>
 <p id="authStatus" role="status" aria-live="polite"></p></div>
 <div id="cloudNotice">⚠️ <b>Mode de transition :</b> les <b>répétitions, indisponibilités et le solde du forfait sont partagés via Supabase</b>. Les concerts sont également partagés via Supabase. Le renouvellement du forfait est réservé à l’administrateur.</div>
-<nav><button data-tab="calendar" class="active">📅 Calendrier</button><button data-tab="absence">🚫 Absences</button><button data-tab="credit">⏱ Forfait</button><button data-tab="concert">🎸 Concerts</button></nav><main><section id="calendar"><h2>Calendrier partagé des répétitions</h2><div class="panel"><p class="muted">Répétitions de 2 h. Les mardis sont calculés automatiquement ; l’administrateur peut ajouter une date exceptionnelle.</p><label>Année <input type="number" id="repYear" min="2026" max="2100" step="1" value="2026"></label><div id="repAdmin" class="hidden"><button id="repYearAdd" type="button">Programmer les mardis de l’année</button><hr><label>Date exceptionnelle ou report <input id="repDate" type="date"></label><button id="repAdd" type="button">Ajouter cette répétition</button></div><p id="repStatus" role="status" aria-live="polite" class="muted">Connecte-toi pour afficher les répétitions.</p></div><div id="repCloud"></div><p class="muted"><small>Le forfait est partagé via Supabase. La programmation annuelle des répétitions est automatique.</small></p><div id="reps" class="hidden"></div><p id="storageNote" class="warning"></p></section><section id="absence" class="hidden"><h2>Indisponibilités</h2><div class="panel"><p class="muted">Chaque membre déclare uniquement ses propres indisponibilités.</p><label>Date <input type="date" id="absDate"></label><button id="addAbs">Ajouter l'indisponibilité</button></div><p id="absCloudStatus" role="status" aria-live="polite" class="muted">Connecte-toi pour consulter les indisponibilités.</p><div id="absences"></div></section><section id="credit" class="hidden"><h2>Forfait salle</h2><div class="panel"><div class="credit-meter" aria-live="polite"><div class="meter-caption">Solde actuel du forfait</div><div id="meterNumber" class="meter-number">…</div><div class="meter-track"><div id="meterFill" class="meter-fill" style="width:0%"></div></div><div id="meterMeta" class="meter-meta">Chargement du forfait…</div></div><div class="credit-renew"><label>Nouveau forfait (heures) <input type="number" id="hours" min="1" max="1000" step="1" value="20"></label><button id="newPack" type="button" disabled>Activer un nouveau forfait</button></div><p id="balance"></p><p id="alert"></p><p id="creditStatus" class="muted" role="status"></p><small>Les heures sont décomptées uniquement après validation. Une correction les restitue. Un solde négatif est autorisé.</small></div><div id="history"></div></section><section id="concert" class="hidden"><h2>Concerts confirmés</h2><p id="gigStatus" class="muted" role="status" aria-live="polite">Connecte-toi pour consulter les concerts.</p><div class="panel hidden" id="gigAdmin"><h3 id="gigFormTitle">Ajouter un concert officiel</h3><label>Date <input type="date" id="gigDate"></label><label>Nom du concert <input id="gigName" placeholder="AIRNOISE + groupe invité"></label><label>Lieu <input id="gigPlace" placeholder="Salle / ville"></label><label>Adresse <input id="gigAddress" placeholder="Adresse complète"></label><label>Horaire <input type="time" id="gigTime"></label><label>Informations <textarea id="gigInfo" rows="3" placeholder="Ouverture, accès, organisation…"></textarea></label><div class="row"><button id="addGig" type="button">Ajouter le concert officiel</button><button id="cancelGigEdit" type="button" class="hidden">Annuler la modification</button></div></div><div id="gigs"></div></section><p class="muted"><small>Répétitions, absences et solde du forfait partagés via Supabase. Concerts partagés via Supabase.</small></p></main><script>
+<nav><button data-tab="calendar" class="active">📅 Calendrier</button><button data-tab="absence">🚫 Absences</button><button data-tab="credit">⏱ Forfait</button><button data-tab="concert">🎸 Concerts</button></nav><main><section id="calendar"><h2>Calendrier des répétitions</h2><div id="nextRep" class="next-rep" aria-live="polite"><small>🎸 PROCHAINE RÉPÉTITION</small><strong id="nextRepDate">Connecte-toi</strong><small id="nextRepMeta"></small></div><div class="month-nav"><button id="prevMonth" type="button" aria-label="Mois précédent">❮</button><strong id="monthTitle" aria-live="polite"></strong><button id="nextMonth" type="button" aria-label="Mois suivant">❯</button></div><button id="todayMonth" class="month-today" type="button">Revenir au mois actuel</button><div id="repAdmin" class="hidden"><details class="rep-tools"><summary>⚙️ Gestion du calendrier</summary><label>Année <input type="number" id="repYear" min="2026" max="2100" step="1" value="2026"></label><button id="repYearAdd" type="button">Programmer les mardis de l’année</button><hr><label>Date exceptionnelle ou report <input id="repDate" type="date"></label><button id="repAdd" type="button">Ajouter cette répétition</button></details></div><p id="repStatus" role="status" aria-live="polite" class="muted rep-status">Connecte-toi pour afficher les répétitions.</p><div id="repCloud"></div><p class="muted"><small>Le forfait est partagé via Supabase. La programmation annuelle des répétitions est automatique.</small></p><div id="reps" class="hidden"></div><p id="storageNote" class="warning"></p></section><section id="absence" class="hidden"><h2>Indisponibilités</h2><div class="panel"><p class="muted">Chaque membre déclare uniquement ses propres indisponibilités.</p><label>Date <input type="date" id="absDate"></label><button id="addAbs">Ajouter l'indisponibilité</button></div><p id="absCloudStatus" role="status" aria-live="polite" class="muted">Connecte-toi pour consulter les indisponibilités.</p><div id="absences"></div></section><section id="credit" class="hidden"><h2>Forfait salle</h2><div class="panel"><div class="credit-meter" aria-live="polite"><div class="meter-caption">Solde actuel du forfait</div><div id="meterNumber" class="meter-number">…</div><div class="meter-track"><div id="meterFill" class="meter-fill" style="width:0%"></div></div><div id="meterMeta" class="meter-meta">Chargement du forfait…</div></div><div class="credit-renew"><label>Nouveau forfait (heures) <input type="number" id="hours" min="1" max="1000" step="1" value="20"></label><button id="newPack" type="button" disabled>Activer un nouveau forfait</button></div><p id="balance"></p><p id="alert"></p><p id="creditStatus" class="muted" role="status"></p><small>Les heures sont décomptées uniquement après validation. Une correction les restitue. Un solde négatif est autorisé.</small></div><div id="history"></div></section><section id="concert" class="hidden"><h2>Concerts confirmés</h2><p id="gigStatus" class="muted" role="status" aria-live="polite">Connecte-toi pour consulter les concerts.</p><div class="panel hidden" id="gigAdmin"><h3 id="gigFormTitle">Ajouter un concert officiel</h3><label>Date <input type="date" id="gigDate"></label><label>Nom du concert <input id="gigName" placeholder="AIRNOISE + groupe invité"></label><label>Lieu <input id="gigPlace" placeholder="Salle / ville"></label><label>Adresse <input id="gigAddress" placeholder="Adresse complète"></label><label>Horaire <input type="time" id="gigTime"></label><label>Informations <textarea id="gigInfo" rows="3" placeholder="Ouverture, accès, organisation…"></textarea></label><div class="row"><button id="addGig" type="button">Ajouter le concert officiel</button><button id="cancelGigEdit" type="button" class="hidden">Annuler la modification</button></div></div><div id="gigs"></div></section><p class="muted"><small>Répétitions, absences et solde du forfait partagés via Supabase. Concerts partagés via Supabase.</small></p></main><script>
 // Navigation commune aux quatre rubriques.
 const $=id=>document.getElementById(id);
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));$(b.dataset.tab).classList.remove('hidden')});
@@ -202,7 +204,17 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
   const yearButton = $c('repYearAdd');
   const dateInput = $c('repDate');
   const addButton = $c('repAdd');
-  yearInput.value = String(new Date().getFullYear());
+  let viewedMonth = new Date(new Date().getFullYear(),new Date().getMonth(),1);
+  yearInput.value = String(viewedMonth.getFullYear());
+  const localDay = () => {const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+  const monthKey = () => `${viewedMonth.getFullYear()}-${String(viewedMonth.getMonth()+1).padStart(2,'0')}`;
+  function setMonth(date){viewedMonth=new Date(date.getFullYear(),date.getMonth(),1);yearInput.value=String(viewedMonth.getFullYear());draw();}
+  function monthFromDate(date){setMonth(new Date(date+'T12:00:00'));}
+  function monthHeader(){ $c('monthTitle').textContent=viewedMonth.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});$c('prevMonth').disabled=monthKey()<='2026-01';$c('nextMonth').disabled=monthKey()>='2100-12'; }
+  $c('prevMonth').onclick=()=>setMonth(new Date(viewedMonth.getFullYear(),viewedMonth.getMonth()-1,1));
+  $c('nextMonth').onclick=()=>setMonth(new Date(viewedMonth.getFullYear(),viewedMonth.getMonth()+1,1));
+  $c('todayMonth').onclick=()=>setMonth(new Date());
+  monthHeader();
   const safe = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const dateFR = date => new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
   if (!window.supabase?.createClient) { status.textContent = 'Connexion Supabase indisponible : vérifie Internet.'; return; }
@@ -282,7 +294,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
   });
   async function refresh() {
     const token = ++generation;
-    if (!user) {isAdmin = false;repetitions=[];forfait=null;adminBox.classList.add('hidden');container.innerHTML='';status.textContent='Connecte-toi pour consulter les répétitions.';drawForfait();buttonsEnabled();return;}
+    if (!user) {isAdmin = false;repetitions=[];forfait=null;adminBox.classList.add('hidden');container.innerHTML='';$c('nextRepDate').textContent='Connecte-toi';$c('nextRepMeta').textContent='';status.textContent='Connecte-toi pour consulter les répétitions.';drawForfait();buttonsEnabled();return;}
     status.textContent='Chargement du calendrier…';
     const [{data:profile,error:profileError},{data:rows,error:rowsError},{data:packs,error:packError}] = await Promise.all([
       db.from('profils').select('role,actif').eq('id',user.id).maybeSingle(),
@@ -293,7 +305,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
     isAdmin = !profileError && profile?.role === 'admin' && profile?.actif === true;
     adminBox.classList.toggle('hidden',!isAdmin);
     buttonsEnabled();
-    if (rowsError) {status.textContent='Lecture du calendrier impossible : '+rowsError.message;container.innerHTML='';return;}
+    if (rowsError) {status.textContent='Lecture du calendrier impossible : '+rowsError.message;container.innerHTML='';repetitions=[];$c('nextRepDate').textContent='Calendrier indisponible';$c('nextRepMeta').textContent='';return;}
     repetitions = rows || [];
     forfait = packError ? null : (packs?.[0] || null);
     drawForfait(packError ? 'Erreur de lecture du forfait : ' + packError.message : 'Forfait synchronisé avec Supabase.');
@@ -302,19 +314,26 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
     status.textContent = 'Calendrier synchronisé avec Supabase. ' + (isAdmin ? 'Mode administrateur.' : 'Consultation uniquement.');
   }
   function draw() {
-    const y=Number(yearInput.value);
-    if (!Number.isInteger(y) || y<2026 || y>2100) {container.textContent='Choisis une année entre 2026 et 2100.';return;}
-    const selected = repetitions.filter(r => r.date_repetition.startsWith(String(y)+'-'));
-    container.innerHTML = selected.length ? selected.map(r => {
-      const cancelled = r.statut === 'annulee' || r.statut === 'annulée';
-      const done = r.validee || r.statut === 'effectuee';
-      const label = done ? '✅ Effectuée' : cancelled ? '❌ Annulée' : '🗓 Prévue';
-      const actions = isAdmin ? `<div class="row" style="margin-top:9px">${done ? `<button type="button" data-action="undo" data-id="${r.id}">Corriger la validation</button>` : cancelled ? `<button type="button" data-action="restore" data-id="${r.id}">Rétablir</button>` : `<button type="button" data-action="validate" data-id="${r.id}">Valider</button><button type="button" data-action="cancel" data-id="${r.id}">Annuler</button><button type="button" data-action="move" data-id="${r.id}">Reporter</button>`}</div>` : '';
-      const abs = (window.airnoiseAbsences || []).filter(a => a.date_indisponibilite === r.date_repetition).map(a => safe((window.airnoiseNoms||{})[a.musicien_id] || 'Membre du groupe'));
-      return `<div class="event"><b>${safe(dateFR(r.date_repetition))}</b> • ${safe(r.duree_heures)} h<br><small>${label}</small>${abs.length?`<p class="warning">Indisponibles : ${abs.join(', ')}</p>`:''}${actions}</div>`;
-    }).join('') : '<p>Aucune répétition programmée pour cette année.</p>';
+    monthHeader();
+    if(!user){container.innerHTML='';return;}
+    const today=localDay();
+    const upcoming=repetitions.filter(r=>r.date_repetition>=today&&!r.validee&&!['annulee','annulée','effectuee'].includes(r.statut)).sort((a,b)=>a.date_repetition.localeCompare(b.date_repetition))[0];
+    $c('nextRepDate').textContent=upcoming?dateFR(upcoming.date_repetition):'Aucune répétition à venir';
+    $c('nextRepMeta').textContent=upcoming?`${upcoming.date_repetition===today?"Aujourd’hui • ":''}${upcoming.duree_heures} h`:'';
+    const openIds=new Set([...container.querySelectorAll('details[open]')].map(d=>d.dataset.rep));
+    const selected=repetitions.filter(r=>r.date_repetition.startsWith(monthKey()+'-'));
+    container.innerHTML=selected.length?selected.map(r=>{
+      const cancelled=r.statut==='annulee'||r.statut==='annulée';
+      const done=r.validee||r.statut==='effectuee';
+      const color=done?'#51d49c':cancelled?'#ff626b':'#ffc36d';
+      const label=done?'✓ Effectuée':cancelled?'✕ Annulée':'◷ Prévue';
+      const date=new Date(r.date_repetition+'T12:00:00');
+      const weekday=date.toLocaleDateString('fr-FR',{weekday:'short'});
+const actions = isAdmin ? `<div class="row" style="margin-top:9px">${done ? `<button type="button" data-action="undo" data-id="${r.id}">Corriger la validation</button>` : cancelled ? `<button type="button" data-action="restore" data-id="${r.id}">Rétablir</button>` : `<button type="button" data-action="validate" data-id="${r.id}">Valider</button><button type="button" data-action="cancel" data-id="${r.id}">Annuler</button><button type="button" data-action="move" data-id="${r.id}">Reporter</button>`}</div>` : '';
+            const abs=(window.airnoiseAbsences||[]).filter(a=>a.date_indisponibilite===r.date_repetition).map(a=>safe((window.airnoiseNoms||{})[a.musicien_id]||'Membre du groupe'));
+      return `<div class="rep-card" style="--rep-color:${color}"><div class="rep-line"><div class="rep-day"><small>${safe(weekday)}</small>${date.getDate()}</div><div class="rep-info"><b>${label}${r.date_repetition===today?' • Aujourd’hui':''}</b><br><small>Répétition • ${safe(r.duree_heures)} h</small>${abs.length?`<p class="warning">Indisponibles : ${abs.join(', ')}</p>`:''}</div></div>${actions?`<details data-rep="${safe(r.id)}" ${openIds.has(String(r.id))?'open':''}><summary>Gestion de la répétition</summary>${actions}</details>`:''}</div>`;
+    }).join(''):'<p>Aucune répétition programmée pour ce mois.</p>';
   }
-  yearInput.addEventListener('change',draw);
   yearButton.addEventListener('click', async () => {
     if (!isAdmin) return;
     const year = Number(yearInput.value);
@@ -331,7 +350,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
     addButton.disabled=true;
     const {error} = await db.from('Repetitions').insert({date_repetition:dateInput.value,duree_heures:2,statut:'prevue',validee:false});
     if (error) {status.textContent=error.code==='23505'?'Cette date existe déjà dans le calendrier.':'Ajout impossible : '+error.message;buttonsEnabled();return;}
-    yearInput.value=dateInput.value.slice(0,4);
+    monthFromDate(dateInput.value);
     await refresh();status.textContent='Répétition ajoutée dans Supabase.';
   });
   container.addEventListener('click',async event=>{
@@ -368,7 +387,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
     button.disabled=true;
     const {error}=await db.from('Repetitions').update(patch).eq('id',rep.id);
     if(error){status.textContent=error.code==='23505'?'Une répétition existe déjà à cette date.':'Modification impossible : '+error.message;button.disabled=false;return;}
-    if(patch.date_repetition)yearInput.value=patch.date_repetition.slice(0,4);
+    if(patch.date_repetition)monthFromDate(patch.date_repetition);
     await refresh();status.textContent='Modification enregistrée dans Supabase. Solde actualisé.';
   });
   // Les absences sont chargées dans un autre module ; actualiser leur affichage dans le calendrier.
